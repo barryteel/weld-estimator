@@ -1,0 +1,118 @@
+<project name="WeldEstimator" default="execute-app" basedir=".">
+  <description>"Application for estimating time and materials for welding."
+  </description>
+
+  <property file="build.properties" />
+
+  <!-- ===================================================================== -->
+  <!--  Public targets                                                       -->
+  <!-- ===================================================================== -->
+
+  <target name="clean"
+          description="Deletes all previous build artifacts.">
+
+    <delete dir="${build.lib.dir}" />
+    <delete dir="${build.classes.dir}" />
+    <delete dir="${build.dir}" />
+  </target>
+
+
+  <target name="init"
+          description="Creates the build directory structure.">
+
+    <mkdir dir="${build.dir}" />
+    <mkdir dir="${build.classes.dir}" />
+    <mkdir dir="${build.lib.dir}" />
+  </target>
+
+
+  <target name="compile" depends="clean, init, timestamp"
+          description="Compiles the source code.">
+
+    <java classname="clojure.lang.Compile">
+      <classpath>
+        <path location="${src.dir}" />
+        <path location="${clojure.jar}" />
+        <path location="${build.classes.dir}" />
+      </classpath>
+      <!-- overide Clojure's default *compile-path* setting of 'classes'-->
+      <sysproperty key="clojure.compile.path" value="${build.classes.dir}" />
+      <arg value="${app.namespace}" />
+    </java>
+    <buildnumber file="${buildnumber.file}" />
+  </target>
+
+
+  <target name="execute-app" depends="compile, copy-files"
+          description="Executes the application.">
+
+    <java classname="${app.namespace}" fork="true">
+      <classpath>
+        <path location="${build.classes.dir}" />
+        <path location="${build.lib.dir}/clojure.jar" />
+      </classpath>
+    </java>
+  </target>
+
+
+  <target name="settings"
+          description="Displays effective build settings.">
+
+    <echo message="****************************************" />
+    <echo message=" Application Settings" />
+    <echo message="****************************************" />
+    <echo message="" />
+
+    <echo message="app.name        ${app.name}" />
+    <echo message="app.namespace   ${app.namespace}" />
+    <echo message="app.version     ${app.version}" />
+    <echo message="" />
+
+    <echo message="****************************************" />
+    <echo message=" Directory mappings" />
+    <echo message="****************************************" />
+    <echo message="" />
+
+    <echo message="src.dir             ${src.dir}" />
+    <echo message="lib.dir             ${lib.dir}" />
+    <echo message="build.dir           ${build.dir}" />
+    <echo message="build.classes.dir   ${build.classes.dir}" />
+    <echo message="build.lib.dir       ${build.lib.dir}" />
+    <echo message="metadata.dir        ${metadata.dir}" />
+    <echo message="" />
+
+    <echo message="****************************************" />
+    <echo message=" File mappings" />
+    <echo message="****************************************" />
+    <echo message="" />
+
+    <echo message="buildnumber.file   ${buildnumber.file}" />
+    <echo message="" />
+
+    <echo message="****************************************" />
+    <echo message=" Library dependency settings" />
+    <echo message="****************************************" />
+    <echo message="" />
+
+    <echo message="clojure.jar   ${clojure.jar}" />
+    <echo message="" />
+  </target>
+
+  <!-- ===================================================================== -->
+  <!--  Private targets                                                      -->
+  <!-- ===================================================================== -->
+
+  <target name="copy-files" depends="init">
+    <copy todir="${build.lib.dir}">
+      <fileset dir="${lib.dir}" includes="*.jar" />
+    </copy>
+  </target>
+
+
+  <target name="timestamp">
+    <tstamp>
+      <format property="build.time" pattern="yyyy-MM-dd'T'HH:mm:ss" />
+    </tstamp>
+  </target>
+
+</project>

@@ -1,0 +1,16 @@
+WeldEstimator - Clojure application for estimating time & materials for welding
+===============================================================================
+
+What you'll need to build WeldEstimator
+---------------------------------------
+
+ * Git  http://git-scm.com/download
+ * Apache Ant  http://ant.apache.org/bindownload.cgi
+ * JDK (version 1.5 or later)  http://java.sun.com/javase/downloads/index.jsp
+
+How to build WeldEstimator
+--------------------------
+
+ * Use git to clone the repository:  git clone git://github.com/barryteel/weld-estimator.git
+ * Move into the weld-estimator directory:  cd weld-estimator
+ * Use Ant to compile the source code and launch the application:  ant
