@@ -33,6 +33,8 @@
       <classpath>
         <path location="${src.dir}" />
         <path location="${clojure.jar}" />
+        <path location="${clojure-contrib.jar}" />
+				<path location="${miglayout.jar}" />
         <path location="${build.classes.dir}" />
       </classpath>
       <!-- overide Clojure's default *compile-path* setting of 'classes'-->
@@ -49,7 +51,9 @@
     <java classname="${app.namespace}" fork="true">
       <classpath>
         <path location="${build.classes.dir}" />
-        <path location="${build.lib.dir}/clojure.jar" />
+        <path location="${build.lib.dir}/${clojure}" />
+        <path location="${build.lib.dir}/${clojure-contrib}" />
+				<path location="${build.lib.dir}/${miglayout}" />
       </classpath>
     </java>
   </target>
@@ -94,7 +98,14 @@
     <echo message="****************************************" />
     <echo message="" />
 
-    <echo message="clojure.jar   ${clojure.jar}" />
+    <echo message="clojure               ${clojure}" />
+    <echo message="clojure-contrib       ${clojure-contrib}" />
+    <echo message="miglayout             ${miglayout}" />
+    <echo message="" />
+
+    <echo message="clojure.jar           ${clojure.jar}" />
+    <echo message="clojure-contrib.jar   ${clojure-contrib.jar}" />
+    <echo message="miglayout.jar         ${miglayout.jar}" />
     <echo message="" />
   </target>
 
