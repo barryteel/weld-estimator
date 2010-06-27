@@ -53,7 +53,7 @@
         <path location="${build.classes.dir}" />
         <path location="${build.lib.dir}/${clojure}" />
         <path location="${build.lib.dir}/${clojure-contrib}" />
-				<path location="${build.lib.dir}/${miglayout}" />
+        <path location="${build.lib.dir}/${miglayout}" />
       </classpath>
     </java>
   </target>
