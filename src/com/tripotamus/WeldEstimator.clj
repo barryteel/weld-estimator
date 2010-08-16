@@ -5,12 +5,13 @@
            (javax.swing BorderFactory ButtonGroup ImageIcon JButton JCheckBox
                         JComboBox JFrame JLabel JPanel JRadioButton JTabbedPane
                         JTextField SwingConstants UIManager))
-  (:use    (clojure.contrib [miglayout :only (miglayout components)])))
+  (:use    (clojure.contrib [miglayout :only (miglayout)])
+           (com.tripotamus.util [core :only (add-weld parse-field)])))
 
 (defn save-before-exit []
 	(println "function 'save-before-exit' called"))
 
-;; build 'Define New Weld' panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; build 'Define new weld' panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (declare joint-state-changed)
 
 (def joint-listener
@@ -18,24 +19,21 @@
     (itemStateChanged [e]
       (joint-state-changed e))))
 
-(def butt-radio (doto (JRadioButton. "Butt" true)
+(def butt-radio (doto (JRadioButton. "butt" true)
   (.addItemListener joint-listener)))
-(def joint-type (ref "butt"))
-(def flush-corner-radio (doto (JRadioButton. "Corner, Flush")
+(def joint-type (atom "butt"))
+(def flush-corner-radio (doto (JRadioButton. "flush-corner")
   (.addItemListener joint-listener)))
-(def open-corner-radio (doto (JRadioButton. "Corner, Open")
+(def edge-radio (doto (JRadioButton. "edge")
   (.addItemListener joint-listener)))
-(def edge-radio (doto (JRadioButton. "Edge")
+(def lap-radio (doto (JRadioButton. "lap/open-corner")
   (.addItemListener joint-listener)))
-(def lap-radio (doto (JRadioButton. "Lap")
-  (.addItemListener joint-listener)))
-(def tee-radio (doto (JRadioButton. "Tee")
+(def tee-radio (doto (JRadioButton. "tee")
   (.addItemListener joint-listener)))
 
 (def joint-group (doto (ButtonGroup.)
   (.add butt-radio)
   (.add flush-corner-radio)
-  (.add open-corner-radio)
   (.add edge-radio)
   (.add lap-radio)
   (.add tee-radio)))
@@ -44,12 +42,11 @@
   (let [panel (miglayout (JPanel.) :layout :flowy; "debug"
     butt-radio
     flush-corner-radio
-    open-corner-radio
     edge-radio
     lap-radio
     tee-radio)]
     (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "Joint")))))
+      (.setBorder (BorderFactory/createTitledBorder "Joint type")))))
 
 (declare groove-state-changed)
 
@@ -65,8 +62,8 @@
   (.addItemListener groove-listener)
   (.setEnabled false)))
 (def v-radio (doto (JRadioButton. "V" true)
-  (.addItemListener groove-listener)
-  (.setEnabled false)))
+  (.addItemListener groove-listener)))
+(def groove-type (atom "v"))
 
 (def groove-group (doto (ButtonGroup.)
   (.add j-radio)
@@ -79,7 +76,7 @@
     u-radio
     v-radio)]
     (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "Groove")))))
+      (.setBorder (BorderFactory/createTitledBorder "Groove type")))))
 
 (declare system-state-changed)
 
@@ -106,8 +103,224 @@
     (doto panel
       (.setBorder (BorderFactory/createTitledBorder "System")))))
 
-;; first card - Butt Joint
-(def butt-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+;; first card: j-groove butt joint
+(def jb-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def jbd1 (JTextField. 5))   ;j-groove butt joint - depth 1
+
+(def jb-params {:d1 jbd1})
+
+(defn jb-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    jbd1 "cell 1 0")] panel))
+
+(defn jb-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    jb-image
+    (jb-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder (BorderFactory/createTitledBorder "J-groove butt joint")))))
+
+;; second card: j-groove flush-corner joint
+(def jf-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def jfd1 (JTextField. 5))   ;j-groove flush-corner joint - depth 1
+
+(def jf-params {:d1 jfd1})
+
+(defn jf-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    jfd1 "cell 1 0")] panel))
+
+(defn jf-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    jf-image
+    (jf-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder
+        (BorderFactory/createTitledBorder "J-groove flush-corner joint")))))
+
+;; third card: j-groove edge joint
+(def je-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def jed1 (JTextField. 5))   ;j-groove edge joint - depth 1
+
+(def je-params {:d1 jed1})
+
+(defn je-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    jed1 "cell 1 0")] panel))
+
+(defn je-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    je-image
+    (je-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder (BorderFactory/createTitledBorder "J-groove edge joint")))))
+
+;; fourth card: j-groove lap joint
+(def jl-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def jld1 (JTextField. 5))   ;j-groove lap joint - depth 1
+
+(def jl-params {:d1 jld1})
+
+(defn jl-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    jld1 "cell 1 0")] panel))
+
+(defn jl-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    jl-image
+    (jl-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder
+        (BorderFactory/createTitledBorder
+          "J-groove lap / open-corner joint")))))
+
+;; fifth card: j-groove tee joint
+(def jt-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def jtd1 (JTextField. 5))   ;j-groove tee joint - depth 1
+
+(def jt-params {:d1 jtd1})
+
+(defn jt-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    jtd1 "cell 1 0")] panel))
+
+(defn jt-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    jt-image
+    (jt-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder (BorderFactory/createTitledBorder "J-groove tee joint")))))
+
+;; sixth card: u-groove butt joint
+(def ub-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def ubd1 (JTextField. 5))   ;u-groove butt joint - depth 1
+
+(def ub-params {:d1 ubd1})
+
+(defn ub-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    ubd1 "cell 1 0")] panel))
+
+(defn ub-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    ub-image
+    (ub-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder (BorderFactory/createTitledBorder "U-groove butt joint")))))
+
+;; seventh card: u-groove flush-corner joint
+(def uf-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def ufd1 (JTextField. 5))   ;u-groove flush-corner joint - depth 1
+
+(def uf-params {:d1 ufd1})
+
+(defn uf-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    ufd1 "cell 1 0")] panel))
+
+(defn uf-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    uf-image
+    (uf-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder
+        (BorderFactory/createTitledBorder "U-groove flush-corner joint")))))
+
+;; eighth card: u-groove edge joint
+(def ue-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def ued1 (JTextField. 5))   ;u-groove edge joint - depth 1
+
+(def ue-params {:d1 ued1})
+
+(defn ue-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    ued1 "cell 1 0")] panel))
+
+(defn ue-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    ue-image
+    (ue-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder (BorderFactory/createTitledBorder "U-groove edge joint")))))
+
+;; ninth card: u-groove lap joint
+(def ul-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def uld1 (JTextField. 5))   ;u-groove lap joint - depth 1
+
+(def ul-params {:d1 uld1})
+
+(defn ul-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    uld1 "cell 1 0")] panel))
+
+(defn ul-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    ul-image
+    (ul-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder
+        (BorderFactory/createTitledBorder
+          "U-groove lap / open-corner joint")))))
+
+;; tenth card: u-groove tee joint
+(def ut-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+  (.setBorder (BorderFactory/createEtchedBorder))))
+
+(def utd1 (JTextField. 5))   ;u-groove tee joint - depth 1
+
+(def ut-params {:d1 utd1})
+
+(defn ut-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
+    :column "[right][]"
+    (JLabel. "d1") "cell 0 0"
+    utd1 "cell 1 0")] panel))
+
+(defn ut-card []
+  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
+    ut-image
+    (ut-inputs-panel) :align :center)]
+    (doto panel
+      (.setBorder (BorderFactory/createTitledBorder "U-groove tee joint")))))
+
+;; eleventh card: v-groove butt joint
+(def vb-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
 (def vbd1     (JTextField. 5))   ;v-groove butt joint - depth 1
@@ -131,11 +344,17 @@
 (def vbrh2    (JTextField. 5))
 (def vbrw2    (JTextField. 5))
 
-(defn butt-inputs-panel []
-  (let [panel (miglayout (JPanel.)
+(def vb-params
+  {:d1 vbd1 :a1 vba1 :d2 vbd2 :a2 vba2 :d3 vbd3 :a3 vba3 :d4 vbd4 :a4 vba4
+   :gap vbg :thk vbt :lg vbl :rh1 vbrh1 :rw1 vbrw1 :rh2 vbrh2 :rw2 vbrw2})
+
+(def params (atom {}))
+(reset! params vb-params)
+
+(defn vb-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
     :column "[right][][right][][right]0[]3[right]0[]15
              [right][][right][][right]0[]"
-;   :layout "debug"
     (JLabel. "d1") "cell 0 0"
     vbd1 "cell 1 0"
     (JLabel. "a1") "cell 2 0"
@@ -177,94 +396,69 @@
     (JLabel. "rw2") "cell 10 3"
     vbrw2 "cell 11 3")] panel))
 
-(defn butt-card []
+(defn vb-card []
   (let [panel (miglayout (JPanel.) :layout :flowy; "debug"
-    butt-image :align :center
-    (butt-inputs-panel))]
+    vb-image :align :center
+    (vb-inputs-panel))]
     (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "Butt Joint")))))
+      (.setBorder (BorderFactory/createTitledBorder "V-groove butt joint")))))
 
-;; second card - Flush Corner Joint
-(def flush-corner-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+;; twelveth card: v-groove flush-corner joint
+(def vf-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
-(def vfcd1   (JTextField. 5))   ;v-groove flush corner joint - depth 1
-(def vfca1   (JTextField. 5))   ;angle 1
-(def vfcb1x2 (JCheckBox.))      ;bevel 1 x2
-(def vfcd2   (JTextField. 5))
-(def vfca2   (JTextField. 5))
-(def vfcf    (JTextField. 5))   ;fillet
-(def vfcg    (JTextField. 5))   ;gap
-(def vfct    (JTextField. 5))   ;thickness
-(def vfcl    (JTextField. 5))   ;length
-(def vfcrh   (JTextField. 5))   ;reinforcement height
-(def vfcrw   (JTextField. 5))   ;reinforcement width
+(def vfd1   (JTextField. 5))   ;v-groove flush corner joint - depth 1
+(def vfa1   (JTextField. 5))   ;angle 1
+(def vfb1x2 (JCheckBox.))      ;bevel 1 x2
+(def vfd2   (JTextField. 5))
+(def vfa2   (JTextField. 5))
+(def vff    (JTextField. 5))   ;fillet
+(def vfg    (JTextField. 5))   ;gap
+(def vft    (JTextField. 5))   ;thickness
+(def vfl    (JTextField. 5))   ;length
+(def vfrh   (JTextField. 5))   ;reinforcement height
+(def vfrw   (JTextField. 5))   ;reinforcement width
 
-(defn flush-corner-inputs-panel []
-  (let [panel (miglayout (JPanel.)
+(def vf-params
+  {:d1 vfd1 :a1 vfa1 :d2 vfd2 :a2 vfa2 :f vff
+   :gap vfg :thk vft :lg vfl :rh vfrh :rw vfrw})
+
+(defn vf-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
     :column "[right][][right][][right]0[]15[right][][right][]"
-;   :layout "debug"
     (JLabel. "d1") "cell 0 0"
-    vfcd1 "cell 1 0"
+    vfd1 "cell 1 0"
     (JLabel. "a1") "cell 2 0"
-    vfca1 "cell 3 0"
+    vfa1 "cell 3 0"
     (JLabel. "2x") "cell 4 0"
-    vfcb1x2 "cell 5 0"
+    vfb1x2 "cell 5 0"
     (JLabel. "d2") "cell 6 0"
-    vfcd2 "cell 7 0"
+    vfd2 "cell 7 0"
     (JLabel. "a2") "cell 8 0"
-    vfca2 "cell 9 0"
+    vfa2 "cell 9 0"
     (JLabel. "f") "cell 0 1"
-    vfcf "cell 1 1"
+    vff "cell 1 1"
     (JLabel. "g") "cell 2 1"
-    vfcg "cell 3 1"
+    vfg "cell 3 1"
     (JLabel. "t") "cell 6 1"
-    vfct "cell 7 1"
+    vft "cell 7 1"
     (JLabel. "lg") "cell 8 1"
-    vfcl "cell 9 1"
+    vfl "cell 9 1"
     (JLabel. "rh") "cell 0 2"
-    vfcrh "cell 1 2"
+    vfrh "cell 1 2"
     (JLabel. "rw") "cell 2 2"
-    vfcrw "cell 3 2")] panel))
+    vfrw "cell 3 2")] panel))
 
-(defn flush-corner-card []
+(defn vf-card []
   (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
-    flush-corner-image
-    (flush-corner-inputs-panel) :align :center)]
+    vf-image
+    (vf-inputs-panel) :align :center)]
     (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "Flush Corner Joint")))))
+      (.setBorder
+        (BorderFactory/createTitledBorder "V-groove flush-corner joint")))))
 
-;; third card - Open Corner Joint
-(def open-corner-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
-  (.setBorder (BorderFactory/createEtchedBorder))))
-
-(def ocf1   (JTextField. 5))   ;open corner joint - fillet 1
-(def ocf1x2 (JCheckBox.))      ;fillet 1 x2
-(def ocf2   (JTextField. 5))
-(def ocl    (JTextField. 5))   ;length
-
-(defn open-corner-inputs-panel []
-  (let [panel (miglayout (JPanel.)
-    :column "[right][][right]0[]15[right][]"
-;   :layout "debug"
-    (JLabel. "f1") "cell 0 0"
-    ocf1 "cell 1 0"
-    (JLabel. "2x") "cell 2 0"
-    ocf1x2 "cell 3 0"
-    (JLabel. "f2") "cell 4 0"
-    ocf2 "cell 5 0"
-    (JLabel. "lg") "cell 0 1"
-    ocl "cell 1 1")] panel))
-
-(defn open-corner-card []
-  (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
-    open-corner-image
-    (open-corner-inputs-panel) :align :center)]
-    (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "Open Corner Joint")))))
-
-;; fourth card - Edge Joint
-(def edge-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+;; thirteenth card: v-groove edge joint
+(def ve-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
 (def ved1   (JTextField. 5))   ;v-groove edge joint - depth 1
@@ -276,10 +470,11 @@
 (def verw   (JTextField. 5))   ;reinforcement width
 (def vel    (JTextField. 5))   ;length
 
-(defn edge-inputs-panel []
-  (let [panel (miglayout (JPanel.)
+(def ve-params {:d1 ved1 :a1 vea1 :d2 ved2 :a2 vea2 :rh verh :rw verw :lg vel})
+
+(defn ve-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
     :column "[right][][right][][right]0[]15[right][][right][]"
-;   :layout "debug"
     (JLabel. "d1") "cell 0 0"
     ved1 "cell 1 0"
     (JLabel. "a1") "cell 2 0"
@@ -297,15 +492,15 @@
     (JLabel. "lg") "cell 6 1"
     vel "cell 7 1")] panel))
 
-(defn edge-card []
+(defn ve-card []
   (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
-    edge-image
-    (edge-inputs-panel) :align :center)]
+    ve-image
+    (ve-inputs-panel) :align :center)]
     (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "Edge Joint")))))
+      (.setBorder (BorderFactory/createTitledBorder "V-groove edge joint")))))
 
-;; fifth card - Lap Joint
-(def lap-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+;; fourteenth card: v-groove lap joint
+(def vl-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
 (def vld1     (JTextField. 5))   ;v-groove lap joint - depth 1
@@ -317,10 +512,11 @@
 (def vlf2     (JTextField. 5))
 (def vll      (JTextField. 5))   ;length
 
-(defn lap-inputs-panel []
-  (let [panel (miglayout (JPanel.)
+(def vl-params {:d1 vld1 :a1 vla1 :f1 vlf1 :d2 vld2 :a2 vla2 :f2 vlf2 :lg vll})
+
+(defn vl-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
     :column "[right][][right][][right][][right]0[]"
-;   :layout "debug"
     (JLabel. "d1") "cell 0 0"
     vld1 "cell 1 0"
     (JLabel. "a1") "cell 2 0"
@@ -338,15 +534,17 @@
     (JLabel. "lg") "cell 0 2"
     vll "cell 1 2")] panel))
 
-(defn lap-card []
+(defn vl-card []
   (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
-    lap-image
-    (lap-inputs-panel) :align :center)]
+    vl-image
+    (vl-inputs-panel) :align :center)]
     (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "Lap Joint")))))
+      (.setBorder
+        (BorderFactory/createTitledBorder
+          "V-groove lap / open-corner joint")))))
 
-;; sixth card - Tee Joint
-(def tee-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
+;; fifteenth card: v-groove tee joint
+(def vt-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
 (def vtd1     (JTextField. 5))   ;v-groove tee joint - depth 1
@@ -360,10 +558,12 @@
 (def vtt      (JTextField. 5))   ;thickness
 (def vtl      (JTextField. 5))   ;length
 
-(defn tee-inputs-panel []
-  (let [panel (miglayout (JPanel.)
+(def vt-params {:d1 vtd1 :a1 vta1 :f1 vtf1 :d2 vtd2 :a2 vta2 :f2 vtf2
+                :gap vtg :thk vtt :lg vtl})
+
+(defn vt-inputs-panel []
+  (let [panel (miglayout (JPanel.); :layout "debug"
     :column "[right][][right][][right][][right]0[]"
-;   :layout "debug"
     (JLabel. "d1") "cell 0 0"
     vtd1 "cell 1 0"
     (JLabel. "a1") "cell 2 0"
@@ -385,24 +585,33 @@
     (JLabel. "lg") "cell 4 2"
     vtl "cell 5 2")] panel))
 
-(defn tee-card []
+(defn vt-card []
   (let [panel (miglayout (JPanel.) :layout :flowy :align :center; "debug"
-    tee-image
-    (tee-inputs-panel) :align :center)]
+    vt-image
+    (vt-inputs-panel) :align :center)]
     (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "Tee Joint")))))
+      (.setBorder (BorderFactory/createTitledBorder "V-groove tee joint")))))
 
-;; add cards to deck
 (def card-manager (CardLayout.))
 
+;; add cards to deck
 (def card-panel (doto (JPanel.)
   (.setLayout card-manager)
-  (.add (butt-card) "butt-card")
-  (.add (flush-corner-card) "flush-corner-card")
-  (.add (open-corner-card) "open-corner-card")
-  (.add (edge-card) "edge-card")
-  (.add (lap-card) "lap-card")
-  (.add (tee-card) "tee-card")))
+  (.add (vb-card) "vb-card")
+  (.add (vf-card) "vf-card")
+  (.add (ve-card) "ve-card")
+  (.add (vl-card) "vl-card")
+  (.add (vt-card) "vt-card")
+  (.add (jb-card) "jb-card")
+  (.add (jf-card) "jf-card")
+  (.add (je-card) "je-card")
+  (.add (jl-card) "jl-card")
+  (.add (jt-card) "jt-card")
+  (.add (ub-card) "ub-card")
+  (.add (uf-card) "uf-card")
+  (.add (ue-card) "ue-card")
+  (.add (ul-card) "ul-card")
+  (.add (ut-card) "ut-card")))
 
 (declare process-state-changed)
 
@@ -446,18 +655,18 @@
     (itemStateChanged [e]
       (combo-state-changed e))))
 
+; @todo Determine proper way to indent JComboBox selections.
 ; Without resorting to leading spaces, selections are
 ; displayed tight against left edge of JComboBox.
-; @todo Determine proper way to indent JComboBox selections
 (def materials-combo (doto (JComboBox.
   (to-array
-    [" Steel", " Stainless Steel", " Aluminum"]))
+    [" steel", " stainless steel", " aluminum"]))
       (.setSelectedIndex 0)
       (.addItemListener combo-listener)))
 
 (def gases-combo (doto (JComboBox.
   (to-array
-    [" CO\u2082", " Open Arc"]))
+    [" CO\u2082", " open arc"]))
       (.setSelectedIndex 0)
       (.addItemListener combo-listener)))
 
@@ -480,13 +689,13 @@
     (itemStateChanged [e]
       (position-state-changed e))))
 
-(def flat-radio (doto (JRadioButton. "Flat")
+(def flat-radio (doto (JRadioButton. "flat")
   (.addItemListener position-listener)))
-(def horizontal-radio (doto (JRadioButton. "Horizontal" true)
+(def horizontal-radio (doto (JRadioButton. "horizontal" true)
   (.addItemListener position-listener)))
-(def vertical-radio (doto (JRadioButton. "Vertical")
+(def vertical-radio (doto (JRadioButton. "vertical")
   (.addItemListener position-listener)))
-(def overhead-radio (doto (JRadioButton. "Overhead")
+(def overhead-radio (doto (JRadioButton. "overhead")
   (.addItemListener position-listener)))
 
 (def position-group (doto (ButtonGroup.)
@@ -508,8 +717,8 @@
   (.addActionListener
     (proxy [ActionListener] []
       (actionPerformed [e]
-        (do
-          (println "'Add Weld' button clicked")))))))
+        (add-weld (conj {:jt @joint-type :gt @groove-type}
+            (into {} (for [[k v] @params] [k (parse-field v)])))))))))
 
 (defn footer-panel []
   (let [panel (miglayout (JPanel.) :layout :align :center; "debug"
@@ -525,122 +734,104 @@
     (system-panel) "growx" :wrap
     card-panel :aligny :top :wrap
     (process-panel) :aligny :top "growx"
-    (JLabel. "Material")
+    (JLabel. "Material:")
     materials-combo "growx"
-    (JLabel. "Shielding Gas")
+    (JLabel. "Shielding gas:")
     gases-combo "growx"
-    (JLabel. "Electrode")
+    (JLabel. "Electrode:")
     electrodes-combo "growx"
-    (JLabel. "Current, Amps")
+    (JLabel. "Amps of current:")
     amps-combo "growx" :wrap
     (position-panel) :aligny :top)] panel))
 
-;; build 'Current Welds' panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; build 'Current welds' panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def current-welds-panel (doto (JPanel.)
   (.add (JLabel. "current-welds-panel" SwingConstants/CENTER))))
 
 ;; build tabbed pane ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def tabbed-pane (doto (JTabbedPane.)
-  (.addTab "Define New Weld" (new-weld-panel))
+  (.addTab "Define new weld" (new-weld-panel))
   (.setMnemonicAt 0 KeyEvent/VK_1)
-  (.addTab "Current Welds" current-welds-panel)
+  (.addTab "Current welds" current-welds-panel)
   (.setMnemonicAt 1 KeyEvent/VK_2)))
+
+(defn groove&joint []
+  (str (first @groove-type) (first @joint-type)))
+
+(defn update-params []
+  (reset! params @(find-var (symbol
+    (str "com.tripotamus.WeldEstimator/" (groove&joint) "-params")))))
+
+(defn update-ui []
+  (.show card-manager card-panel (str (groove&joint) "-card")))
 
 (defn joint-state-changed [e]
   (cond
     (= (.getSource e) butt-radio)
-      (do
-        (dosync (ref-set joint-type "butt"))
-        (.show card-manager card-panel "butt-card"))
+      (reset! joint-type "butt")
     (= (.getSource e) flush-corner-radio)
-      (do
-        (dosync (ref-set joint-type "flush corner"))
-        (.show card-manager card-panel "flush-corner-card"))
-    (= (.getSource e) open-corner-radio)
-      (do
-        (dosync (ref-set joint-type "open corner"))
-        (.show card-manager card-panel "open-corner-card"))
+      (reset! joint-type "flush corner")
     (= (.getSource e) edge-radio)
-      (do
-        (dosync (ref-set joint-type "edge"))
-        (.show card-manager card-panel "edge-card"))
+      (reset! joint-type "edge")
     (= (.getSource e) lap-radio)
-      (do
-        (dosync (ref-set joint-type "lap"))
-        (.show card-manager card-panel "lap-card"))
+      (reset! joint-type "lap")
     (= (.getSource e) tee-radio)
-      (do
-        (dosync (ref-set joint-type "tee"))
-        (.show card-manager card-panel "tee-card"))))
+      (reset! joint-type "tee"))
+  (update-params)
+  (update-ui))
 
 (defn groove-state-changed [e]
   (cond
     (= (.getSource e) j-radio)
-      (do
-        (println "j-groove"))
+      (reset! groove-type "j")
     (= (.getSource e) u-radio)
-      (do
-        (println "u-groove"))
+      (reset! groove-type "u")
     (= (.getSource e) v-radio)
-      (do
-        (println "v-groove"))))
+      (reset! groove-type "v"))
+  (update-params)
+  (update-ui))
 
 (defn system-state-changed [e]
   (cond
     (= (.getSource e) imperial-radio)
-      (do
-        (println "imperial"))
+      (println "imperial")
     (= (.getSource e) metric-radio)
-      (do
-        (println "metric"))))
+      (println "metric")))
 
 (defn process-state-changed [e]
   (cond
     (= (.getSource e) fcaw-radio)
-      (do
-        (println "fcaw"))
+      (println "fcaw")
     (= (.getSource e) gmaw-radio)
-      (do
-        (println "gmaw"))
+      (println "gmaw")
     (= (.getSource e) gtaw-radio)
-      (do
-        (println "gtaw"))
+      (println "gtaw")
     (= (.getSource e) saw-radio)
-      (do
-        (println "saw"))
+      (println "saw")
     (= (.getSource e) smaw-radio)
-      (do
-        (println "smaw"))))
+      (println "smaw")))
 
 (defn combo-state-changed [e]
   (cond
     (= (.getSource e) materials-combo)
-      (do
-        (println (.getSelectedItem materials-combo)))
+      (println (.getSelectedItem materials-combo))
     (= (.getSource e) gases-combo)
-      (do
-        (println (.getSelectedItem gases-combo)))
+      (println (.getSelectedItem gases-combo))
     (= (.getSource e) electrodes-combo)
-      (do
-        (println (.getSelectedItem electrodes-combo)))
+      (println (.getSelectedItem electrodes-combo))
     (= (.getSource e) amps-combo)
-      (do
-        (println (.getSelectedItem amps-combo)))))
+      (println (.getSelectedItem amps-combo))))
 
 (defn position-state-changed [e]
   (cond
     (= (.getSource e) flat-radio)
-      (do
-        (println "flat"))
+      (println "flat")
     (= (.getSource e) horizontal-radio)
-      (do
-        (println "horizontal"))
+      (println "horizontal")
     (= (.getSource e) vertical-radio)
-      (do
-        (println "vertical"))
+      (println "vertical")
     (= (.getSource e) overhead-radio)
-      (do
-        (println "overhead"))))
+      (println "overhead")))
 
 (defn init-GUI []
   (let [frame (JFrame. "Weld Estimator")]
@@ -659,3 +850,4 @@
 (defn -main []
   (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
   (init-GUI))
+
