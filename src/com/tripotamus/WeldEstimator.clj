@@ -717,7 +717,7 @@
   (.addActionListener
     (proxy [ActionListener] []
       (actionPerformed [e]
-        (add-weld (conj {:jt @joint-type :gt @groove-type}
+        (add-weld (conj {:gt @groove-type :jt @joint-type}
             (into {} (for [[k v] @params] [k (parse-field v)])))))))))
 
 (defn footer-panel []
@@ -755,15 +755,15 @@
   (.addTab "Current welds" current-welds-panel)
   (.setMnemonicAt 1 KeyEvent/VK_2)))
 
-(defn groove&joint []
+(defn groove+joint []
   (str (first @groove-type) (first @joint-type)))
 
 (defn update-params []
   (reset! params @(find-var (symbol
-    (str "com.tripotamus.WeldEstimator/" (groove&joint) "-params")))))
+    (str "com.tripotamus.WeldEstimator/" (groove+joint) "-params")))))
 
 (defn update-ui []
-  (.show card-manager card-panel (str (groove&joint) "-card")))
+  (.show card-manager card-panel (str (groove+joint) "-card")))
 
 (defn joint-state-changed [e]
   (cond
