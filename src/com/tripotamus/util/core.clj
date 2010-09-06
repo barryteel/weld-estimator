@@ -9,6 +9,19 @@
   (.setText f "")
   result))
 
+(defn populate-multiples [fields]
+  (dorun
+    (for [field fields]
+      (let [text (.getText (first field))]
+        (dorun
+          (map #(.setText % text) (rest field)))))))
+
+(defn unpopulate-multiples [fields]
+  (dorun
+    (for [field fields]
+      (dorun
+        (map #(.setText % "") (rest field))))))
+
 ;; area of triangle
 (defn- tri-area [adjacent angle]
   (/ (* adjacent (* adjacent (Math/tan (Math/toRadians angle)))) 2.0))
@@ -24,16 +37,16 @@
         area   (* (/ (Math/pow radius 2.0) 2.0) (- theta (Math/sin theta)))]
   area))
 
-;; For now, just return density of low carbon steel
+;; For now, just return density of low carbon steel (lb/inch^3)
 (defn- material-density [] 0.2836)
 
-;; For now, just return 5 lb/hr
-(defn- process-deposition-rate [] 5.0)
+;; For now, just return 5.5 lb/hr of weld wire
+(defn- process-deposition-rate [] 5.5)
 
-;; For now, just return 30% factor
-(defn- operator-factor [] 0.3)
+;; For now, just return 23% of possible arc time
+(defn- operator-factor [] 0.23)
 
-;; For now, just return 40% factor
+;; For now, just return 40% of arc time
 (defn- fitting-factor [] 0.4)
 
 (defmulti area-of-joint (fn [p]
@@ -70,7 +83,7 @@
   (println p))
 
 (defmethod area-of-joint ["v" "butt"] [p]
-	(+ (tri-area     (p :d1)  (p :a1))
+  (+ (tri-area     (p :d1)  (p :a1))
      (tri-area     (p :d2)  (p :a2))
      (tri-area     (p :d3)  (p :a3))
      (tri-area     (p :d4)  (p :a4))
@@ -79,25 +92,25 @@
      (circseg-area (p :rh2) (p :rw2))))
 
 (defmethod area-of-joint ["v" "flush corner"] [p]
-	(+ (tri-area     (p :d1)  (p :a1))
+  (+ (tri-area     (p :d1)  (p :a1))
      (tri-area     (p :d2)  (p :a2))
      (tri-area     (p :f)   *forty-five*)
      (rect-area    (p :thk) (p :gap))
      (circseg-area (p :rh)  (p :rw))))
 
 (defmethod area-of-joint ["v" "edge"] [p]
-	(+ (tri-area     (p :d1)  (p :a1))
+  (+ (tri-area     (p :d1)  (p :a1))
      (tri-area     (p :d2)  (p :a2))
      (circseg-area (p :rh)  (p :rw))))
 
 (defmethod area-of-joint ["v" "lap"] [p]
-	(+ (tri-area     (p :d1)  (p :a1))
+  (+ (tri-area     (p :d1)  (p :a1))
      (tri-area     (p :f1)  *forty-five*)
      (tri-area     (p :d2)  (p :a2))
      (tri-area     (p :f2)  *forty-five*)))
 
 (defmethod area-of-joint ["v" "tee"] [p]
-	(+ (tri-area     (p :d1)  (p :a1))
+  (+ (tri-area     (p :d1)  (p :a1))
      (tri-area     (p :f1)  *forty-five*)
      (tri-area     (p :d2)  (p :a2))
      (tri-area     (p :f2)  *forty-five*)

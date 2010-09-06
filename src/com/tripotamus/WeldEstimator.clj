@@ -1,12 +1,14 @@
 (ns com.tripotamus.WeldEstimator
   (:gen-class)
   (:import (java.awt CardLayout)
-           (java.awt.event ActionListener ItemListener KeyEvent WindowAdapter)
+           (java.awt.event ActionListener ItemEvent ItemListener KeyEvent
+                           WindowAdapter)
            (javax.swing BorderFactory ButtonGroup ImageIcon JButton JCheckBox
                         JComboBox JFrame JLabel JPanel JRadioButton JTabbedPane
                         JTextField SwingConstants UIManager))
   (:use    (clojure.contrib [miglayout :only (miglayout)])
-           (com.tripotamus.util [core :only (add-weld parse-field)])))
+           (com.tripotamus.util [core :only
+             (add-weld parse-field populate-multiples unpopulate-multiples)])))
 
 (defn save-before-exit []
 	(println "function 'save-before-exit' called"))
@@ -102,6 +104,13 @@
     metric-radio)]
     (doto panel
       (.setBorder (BorderFactory/createTitledBorder "System")))))
+
+(declare multiples-state-changed)
+
+(def multiples-listener
+  (proxy [ItemListener] []
+    (itemStateChanged [e]
+      (multiples-state-changed e))))
 
 ;; first card: j-groove butt joint
 (def jb-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
@@ -323,24 +332,29 @@
 (def vb-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
-(def vbd1     (JTextField. 5))   ;v-groove butt joint - depth 1
-(def vba1     (JTextField. 5))   ;angle 1
-(def vbb1x2   (JCheckBox.))      ;bevel 1 x2
-(def vbb1x4   (JCheckBox.))
+(def vbd1     (JTextField. 5))            ;v-groove butt joint - depth 1
+(def vba1     (JTextField. 5))            ;angle 1
+(def vbb1x2   (doto (JCheckBox.)          ;bevel 1 x2
+  (.addItemListener multiples-listener)))
+(def vbb1x4   (doto (JCheckBox.)
+  (.addItemListener multiples-listener)))
 (def vbd2     (JTextField. 5))
 (def vba2     (JTextField. 5))
-(def vbb1&2x2 (JCheckBox.))      ;bevels 1 & 2 x2
+(def vbb1&2x2 (doto (JCheckBox.)          ;bevels 1 & 2 x2
+  (.addItemListener multiples-listener)))
 (def vbd3     (JTextField. 5))
 (def vba3     (JTextField. 5))
-(def vbb3x2   (JCheckBox.))
+(def vbb3x2   (doto (JCheckBox.)
+  (.addItemListener multiples-listener)))
 (def vbd4     (JTextField. 5))
 (def vba4     (JTextField. 5))
-(def vbg      (JTextField. 5))   ;gap
-(def vbt      (JTextField. 5))   ;thickness
-(def vbl      (JTextField. 5))   ;length
-(def vbrh1    (JTextField. 5))   ;reinforcement height 1
-(def vbrw1    (JTextField. 5))   ;reinforcement width 1
-(def vbr1x2   (JCheckBox.))      ;reinforcement 1 x2
+(def vbg      (JTextField. 5))            ;gap
+(def vbt      (JTextField. 5))            ;thickness
+(def vbl      (JTextField. 5))            ;length
+(def vbrh1    (JTextField. 5))            ;reinforcement height 1
+(def vbrw1    (JTextField. 5))            ;reinforcement width 1
+(def vbr1x2   (doto (JCheckBox.)          ;reinforcement 1 x2
+  (.addItemListener multiples-listener)))
 (def vbrh2    (JTextField. 5))
 (def vbrw2    (JTextField. 5))
 
@@ -407,17 +421,18 @@
 (def vf-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
-(def vfd1   (JTextField. 5))   ;v-groove flush corner joint - depth 1
-(def vfa1   (JTextField. 5))   ;angle 1
-(def vfb1x2 (JCheckBox.))      ;bevel 1 x2
+(def vfd1   (JTextField. 5))              ;v-groove flush corner joint - depth 1
+(def vfa1   (JTextField. 5))              ;angle 1
+(def vfb1x2 (doto (JCheckBox.)            ;bevel 1 x2
+  (.addItemListener multiples-listener)))
 (def vfd2   (JTextField. 5))
 (def vfa2   (JTextField. 5))
-(def vff    (JTextField. 5))   ;fillet
-(def vfg    (JTextField. 5))   ;gap
-(def vft    (JTextField. 5))   ;thickness
-(def vfl    (JTextField. 5))   ;length
-(def vfrh   (JTextField. 5))   ;reinforcement height
-(def vfrw   (JTextField. 5))   ;reinforcement width
+(def vff    (JTextField. 5))              ;fillet
+(def vfg    (JTextField. 5))              ;gap
+(def vft    (JTextField. 5))              ;thickness
+(def vfl    (JTextField. 5))              ;length
+(def vfrh   (JTextField. 5))              ;reinforcement height
+(def vfrw   (JTextField. 5))              ;reinforcement width
 
 (def vf-params
   {:d1 vfd1 :a1 vfa1 :d2 vfd2 :a2 vfa2 :f vff
@@ -461,14 +476,15 @@
 (def ve-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
-(def ved1   (JTextField. 5))   ;v-groove edge joint - depth 1
-(def vea1   (JTextField. 5))   ;angle 1
-(def veb1x2 (JCheckBox.))      ;bevel 1 x2
+(def ved1   (JTextField. 5))              ;v-groove edge joint - depth 1
+(def vea1   (JTextField. 5))              ;angle 1
+(def veb1x2 (doto (JCheckBox.)            ;bevel 1 x2
+  (.addItemListener multiples-listener)))
 (def ved2   (JTextField. 5))
 (def vea2   (JTextField. 5))
-(def verh   (JTextField. 5))   ;reinforcement height
-(def verw   (JTextField. 5))   ;reinforcement width
-(def vel    (JTextField. 5))   ;length
+(def verh   (JTextField. 5))              ;reinforcement height
+(def verw   (JTextField. 5))              ;reinforcement width
+(def vel    (JTextField. 5))              ;length
 
 (def ve-params {:d1 ved1 :a1 vea1 :d2 ved2 :a2 vea2 :rh verh :rw verw :lg vel})
 
@@ -503,14 +519,15 @@
 (def vl-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
-(def vld1     (JTextField. 5))   ;v-groove lap joint - depth 1
-(def vla1     (JTextField. 5))   ;angle 1
-(def vlf1     (JTextField. 5))   ;fillet 1
-(def vlb1&fx2 (JCheckBox.))      ;bevel 1 & fillet x2
+(def vld1     (JTextField. 5))            ;v-groove lap joint - depth 1
+(def vla1     (JTextField. 5))            ;angle 1
+(def vlf1     (JTextField. 5))            ;fillet 1
+(def vlb1&fx2 (doto (JCheckBox.)          ;bevel 1 & fillet x2
+  (.addItemListener multiples-listener)))
 (def vld2     (JTextField. 5))
 (def vla2     (JTextField. 5))
 (def vlf2     (JTextField. 5))
-(def vll      (JTextField. 5))   ;length
+(def vll      (JTextField. 5))            ;length
 
 (def vl-params {:d1 vld1 :a1 vla1 :f1 vlf1 :d2 vld2 :a2 vla2 :f2 vlf2 :lg vll})
 
@@ -547,16 +564,17 @@
 (def vt-image (doto (JLabel. (ImageIcon. "images/275x445.png"))
   (.setBorder (BorderFactory/createEtchedBorder))))
 
-(def vtd1     (JTextField. 5))   ;v-groove tee joint - depth 1
-(def vta1     (JTextField. 5))   ;angle 1
-(def vtf1     (JTextField. 5))   ;fillet 1
-(def vtb1&fx2 (JCheckBox.))      ;bevel 1 & fillet x2
+(def vtd1     (JTextField. 5))            ;v-groove tee joint - depth 1
+(def vta1     (JTextField. 5))            ;angle 1
+(def vtf1     (JTextField. 5))            ;fillet 1
+(def vtb1&fx2 (doto (JCheckBox.)          ;bevel 1 & fillet x2
+  (.addItemListener multiples-listener)))
 (def vtd2     (JTextField. 5))
 (def vta2     (JTextField. 5))
 (def vtf2     (JTextField. 5))
-(def vtg      (JTextField. 5))   ;gap
-(def vtt      (JTextField. 5))   ;thickness
-(def vtl      (JTextField. 5))   ;length
+(def vtg      (JTextField. 5))            ;gap
+(def vtt      (JTextField. 5))            ;thickness
+(def vtl      (JTextField. 5))            ;length
 
 (def vt-params {:d1 vtd1 :a1 vta1 :f1 vtf1 :d2 vtd2 :a2 vta2 :f2 vtf2
                 :gap vtg :thk vtt :lg vtl})
@@ -713,12 +731,17 @@
     (doto panel
       (.setBorder (BorderFactory/createTitledBorder "Position")))))
 
+(def multiples-checkboxes
+  [vbb1x2 vbb1x4 vbb1&2x2 vbb3x2 vbr1x2 vfb1x2 veb1x2 vlb1&fx2 vtb1&fx2])
+
 (def add-weld-button (doto (JButton. "Add weld")
   (.addActionListener
     (proxy [ActionListener] []
       (actionPerformed [e]
-        (add-weld (conj {:gt @groove-type :jt @joint-type}
-            (into {} (for [[k v] @params] [k (parse-field v)])))))))))
+        (do
+          (add-weld (conj {:gt @groove-type :jt @joint-type}
+            (into {} (for [[k v] @params] [k (parse-field v)]))))
+          (dorun (map #(.setSelected % false) multiples-checkboxes))))))))
 
 (defn footer-panel []
   (let [panel (miglayout (JPanel.) :layout :align :center; "debug"
@@ -797,6 +820,49 @@
       (println "imperial")
     (= (.getSource e) metric-radio)
       (println "metric")))
+
+; @todo Refactor this function.
+; This function works but smells.
+(defn multiples-state-changed [e]
+  (if (= (.getStateChange e) ItemEvent/SELECTED)
+    (cond
+      (= (.getSource e) vbb1x2)
+        (populate-multiples [[vbd1 vbd2] [vba1 vba2]])
+      (= (.getSource e) vbb1x4)
+        (populate-multiples [[vbd1 vbd2 vbd3 vbd4] [vba1 vba2 vba3 vba4]])
+      (= (.getSource e) vbb1&2x2)
+        (populate-multiples [[vbd1 vbd3] [vba1 vba3] [vbd2 vbd4] [vba2 vba4]])
+      (= (.getSource e) vbb3x2)
+        (populate-multiples [[vbd3 vbd4] [vba3 vba4]])
+      (= (.getSource e) vbr1x2)
+        (populate-multiples [[vbrh1 vbrh2] [vbrw1 vbrw2]])
+      (= (.getSource e) vfb1x2)
+        (populate-multiples [[vfd1 vfd2] [vfa1 vfa2]])
+      (= (.getSource e) veb1x2)
+        (populate-multiples [[ved1 ved2] [vea1 vea2]])
+      (= (.getSource e) vlb1&fx2)
+        (populate-multiples [[vld1 vld2] [vla1 vla2] [vlf1 vlf2]])
+      (= (.getSource e) vtb1&fx2)
+        (populate-multiples [[vtd1 vtd2] [vta1 vta2] [vtf1 vtf2]]))
+    (cond
+      (= (.getSource e) vbb1x2)
+        (unpopulate-multiples [[vbd1 vbd2] [vba1 vba2]])
+      (= (.getSource e) vbb1x4)
+        (unpopulate-multiples [[vbd1 vbd2 vbd3 vbd4] [vba1 vba2 vba3 vba4]])
+      (= (.getSource e) vbb1&2x2)
+        (unpopulate-multiples [[vbd1 vbd3] [vba1 vba3] [vbd2 vbd4] [vba2 vba4]])
+      (= (.getSource e) vbb3x2)
+        (unpopulate-multiples [[vbd3 vbd4] [vba3 vba4]])
+      (= (.getSource e) vbr1x2)
+        (unpopulate-multiples [[vbrh1 vbrh2] [vbrw1 vbrw2]])
+      (= (.getSource e) vfb1x2)
+        (unpopulate-multiples [[vfd1 vfd2] [vfa1 vfa2]])
+      (= (.getSource e) veb1x2)
+        (unpopulate-multiples [[ved1 ved2] [vea1 vea2]])
+      (= (.getSource e) vlb1&fx2)
+        (unpopulate-multiples [[vld1 vld2] [vla1 vla2] [vlf1 vlf2]])
+      (= (.getSource e) vtb1&fx2)
+        (unpopulate-multiples [[vtd1 vtd2] [vta1 vta2] [vtf1 vtf2]]))))
 
 (defn process-state-changed [e]
   (cond
