@@ -6,8 +6,8 @@
 (defn parse-field [f]
   (let [result (try (Math/abs (Double/parseDouble (.getText f)))
                (catch NumberFormatException _ 0.0))]
-  (.setText f "")
-  result))
+    (.setText f "")
+    result))
 
 (defn populate-multiples [fields]
   (dorun
@@ -35,7 +35,7 @@
   (let [radius (+ (/ height 2.0) (/ (Math/pow width 2.0) (* height 8.0)))
         theta  (* (Math/acos (/ (- radius height) radius)) 2.0)
         area   (* (/ (Math/pow radius 2.0) 2.0) (- theta (Math/sin theta)))]
-  area))
+    area))
 
 ;; For now, just return density of low carbon steel (lb/inch^3)
 (defn- material-density [] 0.2836)
@@ -122,15 +122,15 @@
                           (* (process-deposition-rate) (operator-factor)))
         fit-time       (* arc-time (fitting-factor))
         total-time     (+ arc-time fit-time)]
-  (println (str "Arc time is:   "
-    (format "%.2f" arc-time) " hrs / "
-    (format "%.0f" (* arc-time *minutes-per-hour*)) " mins"))
-  (println (str "Fit time is:   "
-    (format "%.2f" fit-time) " hrs / "
-    (format "%.0f" (* fit-time *minutes-per-hour*)) " mins"))
-  (println (str "Total time is: "
-    (format "%.2f" total-time) " hrs / "
-    (format "%.0f" (* total-time *minutes-per-hour*)) " mins"))
-  (println (str "Will require:  "
-    (format "%.1f" weight-of-weld) " lbs of wire\n"))))
+    (println (str "Arc time is:   "
+      (format "%.2f" arc-time) " hrs / "
+      (format "%.0f" (* arc-time *minutes-per-hour*)) " mins"))
+    (println (str "Fit time is:   "
+      (format "%.2f" fit-time) " hrs / "
+      (format "%.0f" (* fit-time *minutes-per-hour*)) " mins"))
+    (println (str "Total time is: "
+      (format "%.2f" total-time) " hrs / "
+      (format "%.0f" (* total-time *minutes-per-hour*)) " mins"))
+    (println (str "Will require:  "
+      (format "%.1f" weight-of-weld) " lbs of wire\n"))))
 

@@ -3,12 +3,15 @@
   (:import (java.awt CardLayout)
            (java.awt.event ActionListener ItemEvent ItemListener KeyEvent
                            WindowAdapter)
-           (javax.swing BorderFactory ButtonGroup ImageIcon JButton JCheckBox
-                        JComboBox JFrame JLabel JPanel JRadioButton JTabbedPane
-                        JTextField SwingConstants UIManager))
+           (java.util Enumeration)
+           (javax.swing BorderFactory ButtonGroup DefaultComboBoxModel ImageIcon
+                        JButton JCheckBox JComboBox JFrame JLabel JPanel
+                        JRadioButton JTabbedPane JTextField SwingConstants
+                        UIManager))
   (:use    (clojure.contrib [miglayout :only (miglayout)])
            (com.tripotamus.util [core :only
-             (add-weld parse-field populate-multiples unpopulate-multiples)])))
+             (add-weld parse-field populate-multiples unpopulate-multiples)])
+           (com.tripotamus.util [db :only (gases electrodes amps)])))
 
 (defn save-before-exit []
 	(println "function 'save-before-exit' called"))
@@ -638,7 +641,7 @@
     (itemStateChanged [e]
       (process-state-changed e))))
 
-(def fcaw-radio (doto (JRadioButton. "FCAW" true)
+(def fcaw-radio (doto (JRadioButton. "FCAW")
   (.addItemListener process-listener)))
 (def gmaw-radio (doto (JRadioButton. "GMAW")
   (.addItemListener process-listener)))
@@ -682,23 +685,17 @@
       (.setSelectedIndex 0)
       (.addItemListener combo-listener)))
 
-(def gases-combo (doto (JComboBox.
-  (to-array
-    [" CO\u2082", " open arc"]))
-      (.setSelectedIndex 0)
-      (.addItemListener combo-listener)))
+(def gases-model (DefaultComboBoxModel.))
+(def gases-combo (doto (JComboBox. gases-model)
+  (.addItemListener combo-listener)))
 
-(def electrodes-combo (doto (JComboBox.
-  (to-array
-    [" 3/64\" dia", " 1/16\" dia", " 3/32\" dia", " 1/8\" dia"]))
-      (.setSelectedIndex 1)
-      (.addItemListener combo-listener)))
+(def electrodes-model (DefaultComboBoxModel.))
+(def electrodes-combo (doto (JComboBox. electrodes-model)
+  (.addItemListener combo-listener)))
 
-(def amps-combo (doto (JComboBox.
-  (to-array
-    [" 200", " 300", " 400", " 500", " 600", " 700"]))
-      (.setSelectedIndex 0)
-      (.addItemListener combo-listener)))
+(def amps-model (DefaultComboBoxModel.))
+(def amps-combo (doto (JComboBox. amps-model)
+  (.addItemListener combo-listener)))
 
 (declare position-state-changed)
 
@@ -760,7 +757,7 @@
     (JLabel. "Material:")
     materials-combo "growx"
     (JLabel. "Shielding gas:")
-    gases-combo "growx"
+    gases-combo "w 160" "growx"
     (JLabel. "Electrode:")
     electrodes-combo "growx"
     (JLabel. "Amps of current:")
@@ -864,29 +861,51 @@
       (= (.getSource e) vtb1&fx2)
         (unpopulate-multiples [[vtd1 vtd2] [vta1 vta2] [vtf1 vtf2]]))))
 
+(defn add-new-elements [model s]
+  (if (not (empty? s))
+    (do
+      (.addElement model (first s))
+      (recur model (rest s)))))
+
+(defn selected-button [group]
+  (apply str
+    (for [btn (enumeration-seq (.. group getElements)) :when (.isSelected btn)]
+      (.. btn getText toLowerCase))))
+
+(defn update-gases-combo []
+  (.removeAllElements gases-model)
+  (add-new-elements gases-model
+    (gases
+      (selected-button process-group))))
+
+(defn update-electrodes-combo []
+  (.removeAllElements electrodes-model)
+  (add-new-elements electrodes-model
+    (electrodes
+      (selected-button process-group)
+      (.getSelectedItem gases-combo))))
+
+(defn update-amps-combo []
+  (.removeAllElements amps-model)
+  (add-new-elements amps-model
+    (amps
+      (selected-button process-group)
+      (.getSelectedItem gases-combo)
+      (.getSelectedItem electrodes-combo))))
+
 (defn process-state-changed [e]
-  (cond
-    (= (.getSource e) fcaw-radio)
-      (println "fcaw")
-    (= (.getSource e) gmaw-radio)
-      (println "gmaw")
-    (= (.getSource e) gtaw-radio)
-      (println "gtaw")
-    (= (.getSource e) saw-radio)
-      (println "saw")
-    (= (.getSource e) smaw-radio)
-      (println "smaw")))
+  (if (= (.getStateChange e) ItemEvent/SELECTED)
+    (update-gases-combo)))
 
 (defn combo-state-changed [e]
-  (cond
-    (= (.getSource e) materials-combo)
-      (println (.getSelectedItem materials-combo))
-    (= (.getSource e) gases-combo)
-      (println (.getSelectedItem gases-combo))
-    (= (.getSource e) electrodes-combo)
-      (println (.getSelectedItem electrodes-combo))
-    (= (.getSource e) amps-combo)
-      (println (.getSelectedItem amps-combo))))
+  (if (= (.getStateChange e) ItemEvent/SELECTED)
+    (cond
+      (= (.getSource e) materials-combo)
+        (println (.getSelectedItem materials-combo))
+      (= (.getSource e) gases-combo)
+        (update-electrodes-combo)
+      (= (.getSource e) electrodes-combo)
+        (update-amps-combo))))
 
 (defn position-state-changed [e]
   (cond
