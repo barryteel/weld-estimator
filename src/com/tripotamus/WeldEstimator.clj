@@ -756,8 +756,8 @@
     (process-panel) :aligny :top "growx"
     (JLabel. "Material:")
     materials-combo "growx"
-    (JLabel. "Shielding gas:")
-    gases-combo "w 160" "growx"
+    (JLabel. "Gas / Electrode stickout(SAW):")
+    gases-combo "w 230" "growx"
     (JLabel. "Electrode:")
     electrodes-combo "growx"
     (JLabel. "Amps of current:")
