@@ -37,3 +37,19 @@
         res (db-query query)
         values (into [] (for [rec res] (:amps rec)))]
     values))
+
+(defn depositions [process gas electrode amps]
+  (let [query (str "SELECT deposition_rate FROM "
+                (str process "_deposition_rates")
+                " WHERE gas_or_stickout = '" gas "'"
+                " AND electrode = "
+                  (if (= String (class electrode))
+                    (str "'" electrode "'")
+                    (double electrode))
+                " AND amps = "
+                  (if (= String (class amps))
+                    (str "'" amps "'")
+                    amps))
+        res (db-query query)
+        values (into [] (for [rec res] (:deposition_rate rec)))]
+    values))

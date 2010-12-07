@@ -11,7 +11,7 @@
   (:use    (clojure.contrib [miglayout :only (miglayout)])
            (com.tripotamus.util [core :only
              (add-weld parse-field populate-multiples unpopulate-multiples)])
-           (com.tripotamus.util [db :only (gases electrodes amps)])))
+           (com.tripotamus.util [db :only (gases electrodes amps depositions)])))
 
 (defn save-before-exit []
 	(println "function 'save-before-exit' called"))
@@ -676,12 +676,9 @@
     (itemStateChanged [e]
       (combo-state-changed e))))
 
-; @todo Determine proper way to indent JComboBox selections.
-; Without resorting to leading spaces, selections are
-; displayed tight against left edge of JComboBox.
 (def materials-combo (doto (JComboBox.
   (to-array
-    [" steel", " stainless steel", " aluminum"]))
+    ["steel", "stainless steel", "aluminum"]))
       (.setSelectedIndex 0)
       (.addItemListener combo-listener)))
 
@@ -695,6 +692,10 @@
 
 (def amps-model (DefaultComboBoxModel.))
 (def amps-combo (doto (JComboBox. amps-model)
+  (.addItemListener combo-listener)))
+
+(def depositions-model (DefaultComboBoxModel.))
+(def depositions-combo (doto (JComboBox. depositions-model)
   (.addItemListener combo-listener)))
 
 (declare position-state-changed)
@@ -761,7 +762,9 @@
     (JLabel. "Electrode:")
     electrodes-combo "growx"
     (JLabel. "Amps of current:")
-    amps-combo "growx" :wrap
+    amps-combo "growx"
+    (JLabel. "Deposition rate (lbs/hr):")
+    depositions-combo "growx" :wrap
     (position-panel) :aligny :top)] panel))
 
 ;; build 'Current welds' panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -873,26 +876,51 @@
       (.. btn getText toLowerCase))))
 
 (defn update-gases-combo []
-  (.removeAllElements gases-model)
-  (add-new-elements gases-model
-    (gases
-      (selected-button process-group))))
+  (let [process (selected-button process-group)]
+    (.removeAllElements gases-model)
+    (add-new-elements gases-model
+      (gases
+        process))
+    (if (= process "smaw")
+      (.setEnabled gases-combo false)
+      (.setEnabled gases-combo true))))
 
 (defn update-electrodes-combo []
-  (.removeAllElements electrodes-model)
-  (add-new-elements electrodes-model
-    (electrodes
-      (selected-button process-group)
-      (.getSelectedItem gases-combo))))
+  (let [process (selected-button process-group)]
+    (.removeAllElements electrodes-model)
+    (add-new-elements electrodes-model
+      (electrodes
+        process
+        (.getSelectedItem gases-combo)))
+    (if (= process "gtaw")
+      (.setEnabled electrodes-combo false)
+      (.setEnabled electrodes-combo true))))
 
 (defn update-amps-combo []
-  (.removeAllElements amps-model)
-  (add-new-elements amps-model
-    (amps
-      (selected-button process-group)
-      (.getSelectedItem gases-combo)
-      (.getSelectedItem electrodes-combo))))
+  (let [process (selected-button process-group)]
+    (.removeAllElements amps-model)
+    (add-new-elements amps-model
+      (amps
+        process
+        (.getSelectedItem gases-combo)
+        (.getSelectedItem electrodes-combo)))
+    (if (= process "gtaw")
+      (.setEnabled amps-combo false)
+      (.setEnabled amps-combo true))))
 
+(defn update-depositions-combo []
+  (let [process (selected-button process-group)]
+    (.removeAllElements depositions-model)
+    (add-new-elements depositions-model
+      (depositions
+        process
+        (.getSelectedItem gases-combo)
+        (.getSelectedItem electrodes-combo)
+        (.getSelectedItem amps-combo)))
+    (if (= process "gtaw")
+      (.setEnabled depositions-combo true)
+      (.setEnabled depositions-combo false))))
+ 
 (defn process-state-changed [e]
   (if (= (.getStateChange e) ItemEvent/SELECTED)
     (update-gases-combo)))
@@ -905,7 +933,9 @@
       (= (.getSource e) gases-combo)
         (update-electrodes-combo)
       (= (.getSource e) electrodes-combo)
-        (update-amps-combo))))
+        (update-amps-combo)
+      (= (.getSource e) amps-combo)
+        (update-depositions-combo))))
 
 (defn position-state-changed [e]
   (cond
