@@ -11,7 +11,8 @@
   (:use    (clojure.contrib [miglayout :only (miglayout)])
            (com.tripotamus.util [core :only
              (add-weld parse-field populate-multiples unpopulate-multiples)])
-           (com.tripotamus.util [db :only (gases electrodes amps depositions)])))
+           (com.tripotamus.util [db :only
+             (gases electrodes amps depositions)])))
 
 (defn save-before-exit []
 	(println "function 'save-before-exit' called"))
@@ -680,6 +681,7 @@
   (to-array
     ["steel", "stainless steel", "aluminum"]))
       (.setSelectedIndex 0)
+      (.setEnabled false)
       (.addItemListener combo-listener)))
 
 (def gases-model (DefaultComboBoxModel.))
@@ -737,8 +739,11 @@
     (proxy [ActionListener] []
       (actionPerformed [e]
         (do
-          (add-weld (conj {:gt @groove-type :jt @joint-type}
-            (into {} (for [[k v] @params] [k (parse-field v)]))))
+          (add-weld
+            (conj {:gt @groove-type
+                   :jt @joint-type
+                   :dr (.getSelectedItem depositions-combo)}
+              (into {} (for [[k v] @params] [k (parse-field v)]))))
           (dorun (map #(.setSelected % false) multiples-checkboxes))))))))
 
 (defn footer-panel []
@@ -920,7 +925,7 @@
     (if (= process "gtaw")
       (.setEnabled depositions-combo true)
       (.setEnabled depositions-combo false))))
- 
+
 (defn process-state-changed [e]
   (if (= (.getStateChange e) ItemEvent/SELECTED)
     (update-gases-combo)))
@@ -965,4 +970,3 @@
 (defn -main []
   (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
   (init-GUI))
-
