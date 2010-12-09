@@ -53,3 +53,10 @@
         res (db-query query)
         values (into [] (for [rec res] (:deposition_rate rec)))]
     values))
+
+(defn operator-efficiency [position]
+  (let [query (str "SELECT efficiency FROM operator_efficiencies"
+                   " WHERE position = '" position "'")
+        res (db-query query)
+        value (first (for [rec res] (:efficiency rec)))]
+    value))

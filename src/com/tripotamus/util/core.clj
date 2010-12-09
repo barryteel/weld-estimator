@@ -40,9 +40,6 @@
 ;; For now, just return density of low carbon steel (lb/inch^3)
 (defn- material-density [] 0.2836)
 
-;; For now, just return 23% of possible arc time
-(defn- operator-factor [] 0.23)
-
 ;; For now, just return 40% of arc time
 (defn- fitting-factor [] 0.4)
 
@@ -116,7 +113,7 @@
 (defn add-weld [p]
   (let [weight-of-weld (* (area-of-joint p) (p :lg) (material-density))
         arc-time       (/ weight-of-weld
-                          (* (p :dr) (operator-factor)))
+                          (* (p :dr) (p :of)))
         fit-time       (* arc-time (fitting-factor))
         total-time     (+ arc-time fit-time)]
     (println (str "Arc time is:   "

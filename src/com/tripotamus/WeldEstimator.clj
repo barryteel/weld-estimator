@@ -12,7 +12,7 @@
            (com.tripotamus.util [core :only
              (add-weld parse-field populate-multiples unpopulate-multiples)])
            (com.tripotamus.util [db :only
-             (gases electrodes amps depositions)])))
+             (gases electrodes amps depositions operator-efficiency)])))
 
 (defn save-before-exit []
 	(println "function 'save-before-exit' called"))
@@ -709,7 +709,7 @@
 
 (def flat-radio (doto (JRadioButton. "flat")
   (.addItemListener position-listener)))
-(def horizontal-radio (doto (JRadioButton. "horizontal" true)
+(def horizontal-radio (doto (JRadioButton. "horizontal")
   (.addItemListener position-listener)))
 (def vertical-radio (doto (JRadioButton. "vertical")
   (.addItemListener position-listener)))
@@ -721,6 +721,8 @@
   (.add horizontal-radio)
   (.add vertical-radio)
   (.add overhead-radio)))
+
+(def operator-factor (atom 0))
 
 (defn position-panel []
   (let [panel (miglayout (JPanel.) :layout :flowy; "debug"
@@ -742,7 +744,8 @@
           (add-weld
             (conj {:gt @groove-type
                    :jt @joint-type
-                   :dr (.getSelectedItem depositions-combo)}
+                   :dr (.getSelectedItem depositions-combo)
+                   :of @operator-factor}
               (into {} (for [[k v] @params] [k (parse-field v)]))))
           (dorun (map #(.setSelected % false) multiples-checkboxes))))))))
 
@@ -943,15 +946,9 @@
         (update-depositions-combo))))
 
 (defn position-state-changed [e]
-  (cond
-    (= (.getSource e) flat-radio)
-      (println "flat")
-    (= (.getSource e) horizontal-radio)
-      (println "horizontal")
-    (= (.getSource e) vertical-radio)
-      (println "vertical")
-    (= (.getSource e) overhead-radio)
-      (println "overhead")))
+  (if (= (.getStateChange e) ItemEvent/SELECTED)
+    (reset! operator-factor
+      (operator-efficiency (selected-button position-group)))))
 
 (defn init-GUI []
   (let [frame (JFrame. "Weld Estimator")]
