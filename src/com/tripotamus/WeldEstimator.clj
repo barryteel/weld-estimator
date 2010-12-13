@@ -733,6 +733,11 @@
     (doto panel
       (.setBorder (BorderFactory/createTitledBorder "Position")))))
 
+(defn process+position-panel []
+  (let [panel (miglayout (JPanel.) :layout :flowx "ins 0" "fillx"; "debug"
+    (process-panel) :aligny :top "growx 50"
+    (position-panel) "growx 50" "growy")] panel))
+
 (def multiples-checkboxes
   [vbb1x2 vbb1x4 vbb1&2x2 vbb3x2 vbr1x2 vfb1x2 veb1x2 vlb1&fx2 vtb1&fx2])
 
@@ -751,9 +756,7 @@
 
 (defn footer-panel []
   (let [panel (miglayout (JPanel.) :layout :align :center; "debug"
-    add-weld-button)]
-    (doto panel
-      (.setBorder (BorderFactory/createEtchedBorder)))))
+    add-weld-button)] panel))
 
 (defn new-weld-panel []
   (let [panel (miglayout (JPanel.) :layout :nogrid :flowy; "debug"
@@ -761,8 +764,8 @@
     (joint-panel) :aligny :top "growx"
     (groove-panel) "growx"
     (system-panel) "growx" :wrap
-    card-panel :aligny :top :wrap
-    (process-panel) :aligny :top "growx"
+    card-panel :aligny :top :wrap "growy"
+    (process+position-panel) :aligny :top "growx"
     (JLabel. "Material:")
     materials-combo "growx"
     (JLabel. "Gas / Electrode stickout(SAW):")
@@ -772,8 +775,7 @@
     (JLabel. "Amps of current:")
     amps-combo "growx"
     (JLabel. "Deposition rate (lbs/hr):")
-    depositions-combo "growx" :wrap
-    (position-panel) :aligny :top)] panel))
+    depositions-combo "growx")] panel))
 
 ;; build 'Current welds' panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def current-welds-panel (doto (JPanel.)
