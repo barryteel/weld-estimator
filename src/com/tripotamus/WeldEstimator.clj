@@ -1,6 +1,6 @@
 (ns com.tripotamus.WeldEstimator
   (:gen-class)
-  (:import (java.awt CardLayout)
+  (:import (java.awt CardLayout Font)
            (java.awt.event ActionListener ItemEvent ItemListener KeyEvent
                            WindowAdapter)
            (java.util Enumeration)
@@ -92,8 +92,7 @@
       (system-state-changed e))))
 
 (def imperial-radio (doto (JRadioButton. "Imperial" true)
-  (.addItemListener system-listener)
-  (.setEnabled false)))
+  (.addItemListener system-listener)))
 (def metric-radio (doto (JRadioButton. "Metric")
   (.addItemListener system-listener)
   (.setEnabled false)))
@@ -107,7 +106,7 @@
     imperial-radio
     metric-radio)]
     (doto panel
-      (.setBorder (BorderFactory/createTitledBorder "System")))))
+      (.setBorder (BorderFactory/createTitledBorder "System of measure")))))
 
 (declare multiples-state-changed)
 
@@ -758,23 +757,27 @@
   (let [panel (miglayout (JPanel.) :layout :align :center; "debug"
     add-weld-button)] panel))
 
+(defn format-label [label]
+  (doto label
+    (.setFont (.deriveFont (.getFont label) Font/PLAIN))))
+
 (defn new-weld-panel []
-  (let [panel (miglayout (JPanel.) :layout :nogrid :flowy; "debug"
+  (let [panel (miglayout (JPanel.) :layout :nogrid :flowy "ins 5"; "debug"
     (footer-panel) :south
     (joint-panel) :aligny :top "growx"
     (groove-panel) "growx"
     (system-panel) "growx" :wrap
     card-panel :aligny :top :wrap "growy"
     (process+position-panel) :aligny :top "growx"
-    (JLabel. "Material:")
+    (format-label (JLabel. "Material:"))
     materials-combo "growx"
-    (JLabel. "Gas / Electrode stickout(SAW):")
+    (format-label (JLabel. "Gas / Electrode stickout (SAW):"))
     gases-combo "w 230" "growx"
-    (JLabel. "Electrode:")
+    (format-label (JLabel. "Electrode:"))
     electrodes-combo "growx"
-    (JLabel. "Amps of current:")
+    (format-label (JLabel. "Amps of current:"))
     amps-combo "growx"
-    (JLabel. "Deposition rate (lbs/hr):")
+    (format-label (JLabel. "Deposition rate (lbs/hr):"))
     depositions-combo "growx")] panel))
 
 ;; build 'Current welds' panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
