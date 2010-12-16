@@ -12,7 +12,7 @@
            (com.tripotamus.util [core :only
              (add-weld parse-field populate-multiples unpopulate-multiples)])
            (com.tripotamus.util [db :only
-             (gases electrodes amps depositions operator-efficiency)])))
+             (gases electrodes amps depositions)])))
 
 (defn save-before-exit []
 	(println "function 'save-before-exit' called"))
@@ -699,29 +699,16 @@
 (def depositions-combo (doto (JComboBox. depositions-model)
   (.addItemListener combo-listener)))
 
-(declare position-state-changed)
-
-(def position-listener
-  (proxy [ItemListener] []
-    (itemStateChanged [e]
-      (position-state-changed e))))
-
-(def flat-radio (doto (JRadioButton. "flat")
-  (.addItemListener position-listener)))
-(def horizontal-radio (doto (JRadioButton. "horizontal")
-  (.addItemListener position-listener)))
-(def vertical-radio (doto (JRadioButton. "vertical")
-  (.addItemListener position-listener)))
-(def overhead-radio (doto (JRadioButton. "overhead")
-  (.addItemListener position-listener)))
+(def flat-radio (JRadioButton. "flat"))
+(def horizontal-radio (JRadioButton. "horizontal"))
+(def vertical-radio (JRadioButton. "vertical"))
+(def overhead-radio (JRadioButton. "overhead"))
 
 (def position-group (doto (ButtonGroup.)
   (.add flat-radio)
   (.add horizontal-radio)
   (.add vertical-radio)
   (.add overhead-radio)))
-
-(def operator-factor (atom 0))
 
 (defn position-panel []
   (let [panel (miglayout (JPanel.) :layout :flowy; "debug"
@@ -740,16 +727,27 @@
 (def multiples-checkboxes
   [vbb1x2 vbb1x4 vbb1&2x2 vbb3x2 vbr1x2 vfb1x2 veb1x2 vlb1&fx2 vtb1&fx2])
 
+(defn selected-button [group]
+  (apply str
+    (for [btn (enumeration-seq (.. group getElements)) :when (.isSelected btn)]
+      (.. btn getText toLowerCase))))
+
 (def add-weld-button (doto (JButton. "Add weld")
   (.addActionListener
     (proxy [ActionListener] []
       (actionPerformed [e]
         (do
           (add-weld
-            (conj {:gt @groove-type
-                   :jt @joint-type
-                   :dr (.getSelectedItem depositions-combo)
-                   :of @operator-factor}
+            (conj {:joint      @joint-type
+                   :groove     @groove-type
+                   :system     (selected-button system-group)
+                   :process    (selected-button process-group)
+                   :position   (selected-button position-group)
+                   :material   (.getSelectedItem materials-combo)
+                   :gas        (.getSelectedItem gases-combo)
+                   :electrode  (.getSelectedItem electrodes-combo)
+                   :amps       (.getSelectedItem amps-combo)
+                   :deposition (.getSelectedItem depositions-combo)}
               (into {} (for [[k v] @params] [k (parse-field v)]))))
           (dorun (map #(.setSelected % false) multiples-checkboxes))))))))
 
@@ -883,11 +881,6 @@
       (.addElement model (first s))
       (recur model (rest s)))))
 
-(defn selected-button [group]
-  (apply str
-    (for [btn (enumeration-seq (.. group getElements)) :when (.isSelected btn)]
-      (.. btn getText toLowerCase))))
-
 (defn update-gases-combo []
   (let [process (selected-button process-group)]
     (.removeAllElements gases-model)
@@ -949,11 +942,6 @@
         (update-amps-combo)
       (= (.getSource e) amps-combo)
         (update-depositions-combo))))
-
-(defn position-state-changed [e]
-  (if (= (.getStateChange e) ItemEvent/SELECTED)
-    (reset! operator-factor
-      (operator-efficiency (selected-button position-group)))))
 
 (defn init-GUI []
   (let [frame (JFrame. "Weld Estimator")]

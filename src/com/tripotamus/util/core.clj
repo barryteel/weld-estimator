@@ -1,4 +1,5 @@
-(ns com.tripotamus.util.core)
+(ns com.tripotamus.util.core
+  (:use (com.tripotamus.util [db :only (operator-factor)])))
 
 (def *forty-five* 45.0)
 (def *minutes-per-hour* 60.0)
@@ -44,7 +45,7 @@
 (defn- fitting-factor [] 0.4)
 
 (defmulti area-of-joint (fn [p]
-  [(p :gt) (p :jt)]))
+  [(p :groove) (p :joint)]))
 
 (defmethod area-of-joint ["j" "butt"] [p]
   (println p))
@@ -110,12 +111,23 @@
      (tri-area     (p :f2)  *forty-five*)
      (rect-area    (p :thk) (p :gap))))
 
+(def weld-number (atom 0))
+(def current-welds (ref []))
+
 (defn add-weld [p]
   (let [weight-of-weld (* (area-of-joint p) (p :lg) (material-density))
         arc-time       (/ weight-of-weld
-                          (* (p :dr) (p :of)))
+                         (* (p :deposition)
+                            (operator-factor (p :position))))
         fit-time       (* arc-time (fitting-factor))
-        total-time     (+ arc-time fit-time)]
+        total-time     (+ arc-time fit-time)
+        new-weld       (conj p {:weight weight-of-weld
+                                :arc    arc-time
+                                :fit    fit-time
+                                :total  total-time
+                                :name   (str "w" (reset! weld-number
+                                                   (inc @weld-number)))})]
+    (dosync (alter current-welds conj new-weld))
     (println (str "Arc time is:   "
       (format "%.2f" arc-time) " hrs / "
       (format "%.0f" (* arc-time *minutes-per-hour*)) " mins"))
